@@ -1,4 +1,4 @@
-![image](https://github.com/kevpfpena/google-capstone-bike/assets/84267369/21bac811-309d-4510-93f5-84c3d80c19f9)# google-capstone-project-bike
+# google-capstone-project-bike
 This report is for a hypothetical company called Cyclistic as part of the Google Data Analytics Program Capstone Project. The company is a bikeshare company and they believe that maximizing the amount of annual members will lead to future growth of the company. 
 
 # Ask
