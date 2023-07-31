@@ -67,6 +67,6 @@ UNION
 SELECT ride_id, rideable_type, started_at, ended_at, start_station_name, end_station_name, start_lat, start_lng, end_lat, end_lng, member_casual
 FROM CapstoneProject..['202306-divvy-tripdata$']
 ```
-
+The rest of the SQL code used can be found in 
 
 
