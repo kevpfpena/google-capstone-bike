@@ -1,1 +1,177 @@
+--To check for any duplicates
+SELECT
+	ride_id,
+	COUNT(*) AS total_entries
+FROM CapstoneProject..combined_data
+GROUP BY
+	ride_id
+HAVING COUNT(*) > 1;
 
+--This returns 7 duplicates so need to remove them
+
+--To delete the duplicates
+WITH CTE AS (
+	SELECT *, ROW_NUMBER()
+	OVER (PARTITION BY ride_id ORDER BY ride_id) as number
+	FROM CapstoneProject..combined_data
+)
+DELETE FROM CTE
+WHERE
+	number > 1
+
+--Delete any character ids with more or less than 16 characters
+DELETE
+FROM CapstoneProject..combined_data
+WHERE
+	LEN(ride_id) < 16 OR LEN(ride_id) > 16
+--Removed 3580 rows
+
+--Find any rows with any testing
+SELECT *
+FROM CapstoneProject..combined_data
+WHERE start_station_name LIKE '%TEST%'
+OR end_station_name LIKE '%TEST%'
+
+--Delete these rows (Found 20)
+DELETE
+FROM CapstoneProject..combined_data
+WHERE
+	start_station_name LIKE '%TEST%'
+	OR end_station_name LIKE '%TEST%'
+
+--Calculate trip duration and filter out those less than 1 minute and more than 24 hours. 
+--Assuming 24 hours = 1440 minutes is the max duration for someone to use a bike, otherwise assume it was stolen.
+SELECT *, datediff(minute, started_at, ended_at) as trip_duration
+FROM CapstoneProject..combined_data
+WHERE 
+	datediff(minute, started_at, ended_at) < 1 OR
+	datediff(minute, started_at, ended_at) >= 1440 
+
+--Deleted trips greater than a day or less than 1 minute.
+DELETE
+FROM CapstoneProject..combined_data
+WHERE
+	datediff(minute, started_at, ended_at) < 1 OR
+	datediff(minute, started_at, ended_at) >= 1440 
+--Deleted 93664 rows
+
+--While some station names are null, I kept the data as I found that electric bikes can be locked instead of being 
+--docked at a docking station. Hence I'm assuming these nulls correspond the bikes being locked.
+
+--Updating start station names and end station names to "locked" for ebikes
+UPDATE CapstoneProject..combined_data
+SET start_station_name = 'Locked' 
+WHERE rideable_type = 'electric_bike' AND start_station_name IS NULL
+
+UPDATE CapstoneProject..combined_data
+SET end_station_name = 'Locked' 
+WHERE rideable_type = 'electric_bike' AND end_station_name IS NULL
+
+DELETE
+FROM CapstoneProject..combined_data
+WHERE rideable_type = 'classic_bike' AND end_station_name IS NULL
+--Deleted 58 records
+
+DELETE
+FROM CapstoneProject..combined_data
+WHERE rideable_type = 'docked_bike' AND end_station_name IS NULL
+--Deleted 808 records
+
+SELECT
+	*,
+	datediff(minute, started_at, ended_at) as trip_duration,
+	DATENAME(WEEKDAY, started_at) as day_started,
+	MONTH(started_at) as month_started
+INTO CapstoneProject.dbo.combined_data_cleaned
+FROM CapstoneProject..combined_data
+ORDER BY
+	started_at asc,
+	day_started asc
+
+
+--Count number of casuals vs members
+SELECT
+	member_casual,
+	COUNT(DISTINCT ride_id) AS number_of_rides
+FROM CapstoneProject.dbo.combined_data_cleaned
+GROUP BY
+	member_casual
+
+--Compare number of casual vs members in each month
+SELECT
+	month_started,
+	member_casual,
+	COUNT(DISTINCT ride_id) AS number_of_rides
+	DATENAME(YEAR, started_at) as year_started
+INTO CapstoneProject.dbo.casual_vs_members_monthly
+FROM
+	CapstoneProject..combined_data_cleaned
+GROUP BY
+	DATENAME(YEAR, started_at),
+	month_started,
+	member_casual
+
+--Compare number of casual vs members on different days 
+SELECT 
+	day_started,
+	member_casual,
+	COUNT(DISTINCT ride_id) AS number_of_rides
+INTO CapstoneProject.dbo.casual_vs_members_weekday
+FROM
+	CapstoneProject..combined_data_cleaned
+GROUP BY
+	day_started, 
+	member_casual
+ORDER BY
+	number_of_rides desc
+
+--Compare casual vs members trip duration in each month
+SELECT
+	month_started,
+	member_casual,
+	AVG(trip_duration) as average_trip_duration,
+	DATENAME(YEAR, started_at) as year_started
+INTO CapstoneProject.dbo.average_trip_duration_monthly
+FROM CapstoneProject..combined_data_cleaned
+GROUP BY
+	DATENAME(YEAR, started_at),
+	month_started,
+	member_casual
+ORDER BY month_started ASC
+
+--Compare casual vs members average trip duration in each weekday
+SELECT
+	day_started,
+	member_casual,
+	AVG(trip_duration) as average_trip_duration
+INTO CapstoneProject.dbo.average_trip_duration_weekday
+FROM CapstoneProject..combined_data_cleaned
+GROUP BY
+	day_started,
+	member_casual
+ORDER BY member_casual 
+
+--Find total rides by hour of day
+SELECT
+	COUNT(DISTINCT ride_id) AS number_of_rides
+	DATEPART(HOUR, started_at) AS hour,
+	member_casual
+INTO CapstoneProject.dbo.summary_casual_vs_members_hourly
+FROM 
+	CapstoneProject..combined_data_cleaned
+GROUP BY
+	DATEPART(HOUR, started_at),
+	member_casual
+
+--The area below was used for checking whether the code was executed properly and gave the intended outcomes.
+SELECT
+	COUNT(DISTINCT ride_id) AS number_of_rides
+	DATEPART(HOUR, started_at) AS hour,
+	month_started
+	member_casual
+FROM 
+	CapstoneProject..combined_data_cleaned
+GROUP BY
+	month_started,
+	DATEPART(HOUR, started_at),
+	member_casual
