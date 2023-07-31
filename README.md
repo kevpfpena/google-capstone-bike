@@ -67,6 +67,26 @@ UNION
 SELECT ride_id, rideable_type, started_at, ended_at, start_station_name, end_station_name, start_lat, start_lng, end_lat, end_lng, member_casual
 FROM CapstoneProject..['202306-divvy-tripdata$']
 ```
-The rest of the SQL code used can be found in 
+The rest of the SQL code used can be found in [here](https://github.com/kevpfpena/google-capstone-bike/blob/14c1426fd61a54142609d27bafc12780c95e2001/google-capstone-project-sql).
 
+The summary of the data cleaning steps I took were:
+* Removed duplicates
+* Checked ride_id for any errors (should have 16 characters only) and deleted those with errors.
+* Updated null start_station_name and end_station_name with "Locked" for electric bikes as these bikes could be locked anywhere and may not be logged into the system and hence why null appears.
+* Deleted records for classic and docked bikes with null start_station_name and end_station_name.
+* Created a column called trip_duration which calculated the difference between the ended_at and started_at column. Displayed in minutes.
+* Created a column called month_started, indicating the month when the trip started.
+* Created a column called day_started, indicating the weekday (Mon-Sun) when the trip started.
+* Deleted records of data where the trip_duration was greater than 24 hours and less than 1 minute.
+
+# Analyze and Share
+For this step, I also used SQL. So, I needed to compare the differences between the casual and annual riders. To do that, I did the following first:
+* Compared the total number of casual and member rides over the whole period.
+* Compared the number of casual rides and member rides in each month.
+* Compare the number of casual rides and member rides in each day.
+
+
+
+
+The code is once again found [here](https://github.com/kevpfpena/google-capstone-bike/blob/14c1426fd61a54142609d27bafc12780c95e2001/google-capstone-project-sql).
 
