@@ -153,7 +153,7 @@ ORDER BY member_casual
 
 --Find total rides by hour of day
 SELECT
-	COUNT(DISTINCT ride_id) AS number_of_rides
+	COUNT(DISTINCT ride_id) AS number_of_rides,
 	DATEPART(HOUR, started_at) AS hour,
 	member_casual
 INTO CapstoneProject.dbo.summary_casual_vs_members_hourly
@@ -165,7 +165,7 @@ GROUP BY
 
 --The area below was used for checking whether the code was executed properly and gave the intended outcomes.
 SELECT
-	COUNT(DISTINCT ride_id) AS number_of_rides
+	COUNT(DISTINCT ride_id) AS number_of_rides,
 	DATEPART(HOUR, started_at) AS hour,
 	month_started
 	member_casual
